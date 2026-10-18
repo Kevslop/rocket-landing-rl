@@ -1,5 +1,14 @@
 # Rocket Landing RL 🚀
 
+> **v2 is here — the 3D mission sim.** This repo now has two versions:
+> - **[v2/](v2/) — current.** Full 3D takeoff → waypoint → landing mission with
+>   engine loadouts (Raptor 3, Merlin 1D, BE-4, Rutherford + projected aerospike /
+>   rotating-detonation concepts), moving landing pad, ±5% pad slopes, rain/snow/ice
+>   weather, domain randomization, and an interactive SpaceX-style 3D demo
+>   (watch AI, manual keyboard flight, slow-mo replay). See [v2/README.md](v2/README.md).
+> - **v1 (below) — outdated.** The original 2D landing prototype (99.7% landing
+>   success, 997/1000 evals). Kept for reference; all new work is in v2/.
+
 Train a reinforcement-learning agent to land a 2D rocket on a pad — a
 from-scratch spinoff built on open-source libraries (Gymnasium +
 stable-baselines3). No code is copied from any existing rocket-landing
