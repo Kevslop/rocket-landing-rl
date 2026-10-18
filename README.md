@@ -102,6 +102,28 @@ early episodes average ≈ −120 reward (all crashes); by the end of 200k
 steps episodes average ≈ +87 reward (mostly clean landings). A landing
 attempt GIF from the eval run is saved at `runs/eval_landing.gif`.
 
+## Final result — 99.7% (Oct 17, 2026)
+
+Continued training from the 200k-step model with `train_until_perfect.py`
+(1,000-episode evals per round) reached **99.7% clean landings** and
+stopped there as the accepted final result:
+
+| Round | Cumulative steps | Landed / 1000 | Mean reward | Mean fuel |
+|---|---|---|---|---|
+| 0 | 200,704 | 435 (43.5%) | -18.7 | 3.6 |
+| 1 | 600,704 | 897 (89.7%) | 68.6 | 4.7 |
+| 3 | 1,400,704 | 984 (98.4%) | 83.3 | 4.3 |
+| 4 | 1,800,704 | 991 (99.1%) | 84.5 | 4.3 |
+| 6 | 2,600,704 | **997 (99.7%)** | **85.6** | **4.0** |
+
+Best model: `models/ppo_rocket_best.zip` (Round 6). Full per-round logs in
+`runs/perfect_run_log.jsonl`.
+
+Note: this final training run used the fixed landing check in `env.py`
+— the landing limits (|vy| ≤ 1.5 m/s, |vx| ≤ 1.0 m/s, |tilt| ≤ 0.20 rad)
+are now judged on pre-contact impact velocity/tilt, not the post-contact
+zeroed state (the original code silently disabled the speed limits).
+
 PPO typically goes from near-0% success (random flailing / crashing) to a
 clear majority of clean landings within ~100–200k steps on this task, with
 mean fuel use dropping as the policy learns to burn only on final descent.

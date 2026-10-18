@@ -93,6 +93,9 @@ class RocketLandingEnv(gym.Env):
         self.trajectory: list[tuple[float, float]] = []
         self.landed = False
         self.crashed = False
+        # Per-episode diagnostics (filled in reset / at episode end).
+        self.start_diag: dict = {}
+        self.last_diag: dict | None = None
 
     # ---- Gymnasium API ---------------------------------------------------
     def reset(self, *, seed: int | None = None, options: dict | None = None):
@@ -113,6 +116,18 @@ class RocketLandingEnv(gym.Env):
         self.trajectory = [(x, y)]
         self.landed = False
         self.crashed = False
+        # Starting conditions, for per-episode diagnostics / analytics.
+        self.start_diag = {
+            "start_x": x,
+            "start_y": y,
+            "start_vx": vx,
+            "start_vy": vy,
+            "start_angle": angle,
+            "start_ang_vel": ang_vel,
+            "start_speed": math.hypot(vx, vy),
+            "start_dist": math.hypot(x, y - self.PAD_Y),
+        }
+        self.last_diag = None
         return self._obs(), {}
 
     def step(self, action):
@@ -151,6 +166,12 @@ class RocketLandingEnv(gym.Env):
         # Leg contact is computed from the body's bottom corners.
         leg_l = leg_r = 0.0
         ground_hit = y - self.ROCKET_HALF_HEIGHT <= 0.0
+        # Capture the pre-contact velocity/tilt BEFORE the inelastic ground
+        # contact zeroes them. The landing check must judge the actual
+        # impact, not the post-contact (zeroed) state: the original code
+        # zeroed velocity first, which silently disabled the |vy| <= 1.5
+        # and |vx| <= 1.0 limits (soft/slow were always True).
+        impact_vx, impact_vy, impact_angle = vx, vy, angle
         if ground_hit:
             y = self.ROCKET_HALF_HEIGHT
             # Legs touch if the body is roughly upright.
@@ -164,14 +185,19 @@ class RocketLandingEnv(gym.Env):
         self.trajectory.append((x, y))
 
         # --- termination ---
+        # NOTE: the landing check uses the PRE-CONTACT velocity/tilt
+        # (impact_*), not the post-contact zeroed state. Physics constants
+        # and the landing thresholds themselves are unchanged; this only
+        # makes the documented speed limits actually apply.
         terminated = False
         reward = self._shaped_reward(x, y, vx, vy, angle, throttle,
                                      left_rcs, right_rcs)
+        out_of_bounds = (x < -1.0 or x > 1.0 or y > self.WORLD_H)
+        on_pad = abs(x) <= self.PAD_HALF_WIDTH
         if ground_hit:
-            on_pad = abs(x) <= self.PAD_HALF_WIDTH
-            soft = abs(vy) <= self.MAX_LANDING_VY
-            slow = abs(vx) <= self.MAX_LANDING_VX
-            upright = abs(angle) <= self.MAX_LANDING_ANGLE
+            soft = abs(impact_vy) <= self.MAX_LANDING_VY
+            slow = abs(impact_vx) <= self.MAX_LANDING_VX
+            upright = abs(impact_angle) <= self.MAX_LANDING_ANGLE
             if on_pad and soft and slow and upright:
                 terminated = True
                 self.landed = True
@@ -179,9 +205,11 @@ class RocketLandingEnv(gym.Env):
             else:
                 terminated = True
                 self.crashed = True
-                # Crash penalty scales with how bad the touchdown was.
-                reward -= 50.0 + 10.0 * min(abs(vy), 5.0) + 20.0 * abs(angle)
-        elif x < -1.0 or x > 1.0 or y > self.WORLD_H:
+                # Crash penalty scales with how bad the touchdown was
+                # (now using the true impact velocity/tilt).
+                reward -= (50.0 + 10.0 * min(abs(impact_vy), 5.0)
+                           + 20.0 * abs(impact_angle))
+        elif out_of_bounds:
             terminated = True
             self.crashed = True
             reward -= 100.0  # flew off-screen
@@ -190,12 +218,64 @@ class RocketLandingEnv(gym.Env):
             reward -= 10.0
 
         truncated = (self.steps >= self.MAX_STEPS) and not terminated
+
+        # --- crash taxonomy: exactly one cause per failed episode ---
+        # Precedence: timeout > (ground-hit causes) > out-of-bounds.
+        # Ground-hit causes, in order: fuel exhaustion > too-fast impact
+        # > off-pad landing > excessive tilt. "Too-fast" covers either
+        # speed limit (|vy| > 1.5 or |vx| > 1.0); the final fallback
+        # catches a horizontal-speed-only violation.
+        crash_cause = None
+        if truncated:
+            crash_cause = "timeout"
+        elif terminated and not self.landed:
+            if ground_hit:
+                if self.fuel <= 0:
+                    crash_cause = "fuel exhaustion"
+                elif (abs(impact_vy) > self.MAX_LANDING_VY
+                        or abs(impact_vx) > self.MAX_LANDING_VX):
+                    crash_cause = "too-fast impact"
+                elif not on_pad:
+                    crash_cause = "off-pad landing"
+                elif abs(impact_angle) > self.MAX_LANDING_ANGLE:
+                    crash_cause = "excessive tilt"
+                else:
+                    crash_cause = "too-fast impact"
+            else:
+                crash_cause = "out-of-bounds"
+
+        # --- per-episode diagnostics ---
+        diag = None
+        if terminated or truncated:
+            diag = {
+                **self.start_diag,
+                "impact_vx": float(impact_vx),
+                "impact_vy": float(impact_vy),
+                "impact_angle": float(impact_angle),
+                "touchdown_x": float(x) if ground_hit else None,
+                "final_x": float(x),
+                "final_y": float(y),
+                "fuel_used": float(self.FUEL_MAX - self.fuel),
+                "fuel_left": float(self.fuel),
+                "steps": int(self.steps),
+                "landed": bool(self.landed),
+                "crashed": bool(self.crashed),
+                "truncated": bool(truncated),
+                "crash_cause": crash_cause,
+                "outcome": ("landed" if self.landed
+                            else (crash_cause or "failed")),
+            }
+            self.last_diag = diag
+
         info = {
             "landed": self.landed,
             "crashed": self.crashed,
             "fuel_left": self.fuel,
             "steps": self.steps,
+            "crash_cause": crash_cause,
         }
+        if diag is not None:
+            info["diag"] = diag
         return self._obs(), float(reward), terminated, truncated, info
 
     # ---- helpers ---------------------------------------------------------

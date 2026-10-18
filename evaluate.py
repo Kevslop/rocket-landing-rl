@@ -99,12 +99,33 @@ def main():
     parser.add_argument("--wind", type=float, default=0.0)
     parser.add_argument("--gif", type=str, default="runs/eval_landing.gif")
     parser.add_argument("--no-gif", action="store_true")
+    parser.add_argument("--diag-csv", type=str, default=None,
+                        help="write per-episode diagnostics to this CSV")
     args = parser.parse_args()
 
     gif_path = args.gif if not args.no_gif else ""
     stats = evaluate(args.model, episodes=args.episodes, seed=args.seed,
                      gif_path=gif_path or "runs/eval_landing.gif",
                      wind=args.wind)
+    if args.diag_csv:
+        from diagnostics import run_eval_episodes
+        from stable_baselines3 import PPO as _PPO
+        _model = _PPO.load(args.model)
+        rows = run_eval_episodes(_model, args.episodes,
+                                 seed_base=1_000_000, wind=args.wind)
+        import csv as _csv
+        fields = ["episode", "seed", "reward", "start_x", "start_y",
+                  "start_vx", "start_vy", "start_angle", "start_ang_vel",
+                  "start_speed", "start_dist", "impact_vx", "impact_vy",
+                  "impact_angle", "touchdown_x", "final_x", "final_y",
+                  "fuel_used", "fuel_left", "steps", "landed", "crashed",
+                  "truncated", "crash_cause", "outcome"]
+        with open(args.diag_csv, "w", newline="") as f:
+            w = _csv.DictWriter(f, fieldnames=fields)
+            w.writeheader()
+            for r in rows:
+                w.writerow({k: r.get(k) for k in fields})
+        print(f"  Diagnostics CSV:       {args.diag_csv}")
     print(f"Model: {stats['model']}  ({stats['episodes']} episodes)")
     print(f"  Success (landed on pad): {stats['landed']}/{stats['episodes']} "
           f"= {stats['success_rate']:.1%}")
