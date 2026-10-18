@@ -1,0 +1,10 @@
+gymnasium==0.29.1
+stable-baselines3==2.3.2
+numpy==1.26.4
+matplotlib==3.9.2
+# torch is a stable-baselines3 dependency. Install the CPU-only wheel to
+# avoid the multi-GB CUDA download:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch==2.3.1
+cloudpickle
+pandas
