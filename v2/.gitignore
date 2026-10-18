@@ -1,0 +1,5 @@
+# training artifacts (reproducible; not committed)
+models/
+runs/
+*.log
+__pycache__/

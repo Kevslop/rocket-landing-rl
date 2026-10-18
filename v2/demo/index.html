@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rocket Landing RL — v2 Mission Demo</title>
+<link rel="stylesheet" href="./style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+</head>
+<body>
+<div id="scene"></div>
+
+<div id="topbar">
+  <div class="brand"><b>RL LANDING</b> // V2 &middot; TAKEOFF &rarr; LANDING</div>
+  <div id="clock"><small>T+</small><span id="tval">00:00.0</span></div>
+  <div id="status" class="nominal">STANDBY</div>
+</div>
+
+<div id="conn">CONNECTING TO SIM&hellip;</div>
+<div id="replay-banner">&#9654; REPLAY &times;0.3</div>
+
+<div class="panel" id="tele-left">
+  <h3>TELEMETRY</h3>
+  <div class="row"><span class="label">PHASE</span><span class="val sm" id="phasev">ASCENT</span></div>
+  <div class="row"><span class="label">ALT</span><span class="val" id="alt">0.0<small>m</small></span></div>
+  <div class="row"><span class="label">V/SPD</span><span class="val" id="vspd">0.0<small>m/s</small></span></div>
+  <div class="row"><span class="label">H/SPD</span><span class="val" id="hspd">0.0<small>m/s</small></span></div>
+  <div class="row"><span class="label">TILT</span><span class="val" id="tilt">0.0<small>&deg;</small></span></div>
+  <h3 style="margin-top:10px">LANDING PAD</h3>
+  <div class="row"><span class="label">DIST</span><span class="val" id="paddist">0<small>m</small></span></div>
+  <div class="row"><span class="label">BRG</span><span class="val" id="padbrg">000<small>&deg;</small></span></div>
+  <div class="row"><span class="label">SLOPE</span><span class="val" id="padslope">0.0<small>%</small></span></div>
+  <div class="row"><span class="label">WX</span><span class="val sm" id="weatherv">CLEAR</span></div>
+</div>
+
+<div class="panel" id="tele-right">
+  <h3>PROPULSION</h3>
+  <div class="row"><span class="label">ENGINE</span></span></div>
+  <div class="val sm" id="enginev" style="margin-bottom:8px">—</div>
+  <div class="row"><span class="label">PROPELLANT</span><span class="val" id="fuelv">100<small>%</small></span></div>
+  <div class="bar"><div id="fuel-fill"></div></div>
+  <div class="row"><span class="label">THROTTLE</span><span class="val" id="thrv">0<small>%</small></span></div>
+  <div class="bar"><div id="thr-fill"></div></div>
+  <div class="row"><span class="label">CHAMBER P</span><span class="val" id="pcv">0<small>bar</small></span></div>
+  <div class="bar"><div id="pc-fill"></div></div>
+  <div class="row" id="det-row"><span class="label">DET FREQ</span><span class="val" id="detv">—</span></div>
+  <div class="row"><span class="label">ENGINES</span></span></div>
+  <div id="engines">
+    <div class="eng" id="eng1">1</div>
+    <div class="eng" id="eng2">2</div>
+    <div class="eng" id="eng3">3</div>
+  </div>
+  <div class="row" style="margin-top:10px"><span class="label">WIND</span>
+    <span class="val"><span id="wind-arrow">&#8594;</span> <span id="windv">0.0</span><small>m/s</small></span>
+  </div>
+  <div class="row"><span class="label">T/W</span><span class="val" id="massv">0<small></small></span></div>
+</div>
+
+<div class="panel" id="loadout-panel">
+  <h3>LOADOUT</h3>
+  <label>ENGINE</label>
+  <select id="sel-engine"></select>
+  <label>PROPULSION TECH</label>
+  <select id="sel-tech"></select>
+  <label>WEATHER</label>
+  <select id="sel-weather"></select>
+  <div id="loadout-spec"></div>
+  <button id="btn-fly">&#9654; FLY LOADOUT</button>
+</div>
+
+<div id="log"></div>
+
+<div id="controls">
+  <button id="btn-ai">&#9654; WATCH AI</button>
+  <button id="btn-manual">&#9995; FLY MANUAL</button>
+  <button id="btn-rand">&#127922; RANDOMIZE</button>
+  <span id="speed">
+    <button data-v="0.25">0.25&times;</button><button data-v="0.5" class="active">0.5&times;</button><button data-v="1">1&times;</button>
+  </span>
+  <button id="btn-auto">&#128257; AUTO</button>
+  <button id="btn-replay" disabled>&#128252; REPLAY</button>
+  <button id="btn-cam">&#127909; FOLLOW</button>
+</div>
+
+<div id="hint">
+  <b>W/S</b> pitch &nbsp;<b>A/D</b> roll<br>
+  <b>R/F</b> throttle &nbsp;<b>X</b> cutoff
+</div>
+
+<div id="report">
+  <div id="report-title">MISSION</div>
+  <div id="report-body"></div>
+  <button id="report-close">CLOSE</button>
+</div>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

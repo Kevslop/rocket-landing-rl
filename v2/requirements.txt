@@ -1,0 +1,8 @@
+# v2 mission sim requirements (extends the v1 set).
+# Install:  ../.venv/bin/pip install -r v2/requirements.txt
+# (gymnasium, stable-baselines3, numpy, torch CPU are already in ../.venv)
+
+websockets==17.2
+
+# Frontend: Three.js r160 is vendored at v2/demo/vendor/three.module.js
+# (MIT license) — no npm / no build step needed.

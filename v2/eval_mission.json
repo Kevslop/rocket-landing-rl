@@ -1,0 +1,204 @@
+{
+  "pilot": "scripted",
+  "model": "/home/hatch/workspace/rocket-landing-rl/v2/models/best_mission.zip",
+  "episodes_per_loadout": 40,
+  "loadouts": {
+    "raptor3+standard": {
+      "engine": "raptor3",
+      "tech": "standard",
+      "success_rate": 0.175,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 32.3,
+      "mean_flight_time_s": 26.0,
+      "outcomes": {
+        "crashed": 33,
+        "landed": 7
+      }
+    },
+    "raptor3+aerospike": {
+      "engine": "raptor3",
+      "tech": "aerospike",
+      "success_rate": 0.125,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 30.6,
+      "mean_flight_time_s": 25.8,
+      "outcomes": {
+        "crashed": 35,
+        "landed": 5
+      }
+    },
+    "raptor3+rdre": {
+      "engine": "raptor3",
+      "tech": "rdre",
+      "success_rate": 0.4,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 36.7,
+      "mean_flight_time_s": 30.6,
+      "outcomes": {
+        "landed": 16,
+        "crashed": 24
+      }
+    },
+    "raptor3+rdre_spike": {
+      "engine": "raptor3",
+      "tech": "rdre_spike",
+      "success_rate": 0.375,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 34.7,
+      "mean_flight_time_s": 30.4,
+      "outcomes": {
+        "landed": 15,
+        "crashed": 25
+      }
+    },
+    "merlin1d+standard": {
+      "engine": "merlin1d",
+      "tech": "standard",
+      "success_rate": 0.15,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 35.9,
+      "mean_flight_time_s": 30.6,
+      "outcomes": {
+        "crashed": 34,
+        "landed": 6
+      }
+    },
+    "merlin1d+aerospike": {
+      "engine": "merlin1d",
+      "tech": "aerospike",
+      "success_rate": 0.15,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 33.1,
+      "mean_flight_time_s": 30.1,
+      "outcomes": {
+        "crashed": 34,
+        "landed": 6
+      }
+    },
+    "merlin1d+rdre": {
+      "engine": "merlin1d",
+      "tech": "rdre",
+      "success_rate": 0.2,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 37.4,
+      "mean_flight_time_s": 31.9,
+      "outcomes": {
+        "crashed": 32,
+        "landed": 8
+      }
+    },
+    "merlin1d+rdre_spike": {
+      "engine": "merlin1d",
+      "tech": "rdre_spike",
+      "success_rate": 0.225,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 34.4,
+      "mean_flight_time_s": 31.4,
+      "outcomes": {
+        "crashed": 31,
+        "landed": 9
+      }
+    },
+    "be4+standard": {
+      "engine": "be4",
+      "tech": "standard",
+      "success_rate": 0.075,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 32.6,
+      "mean_flight_time_s": 26.4,
+      "outcomes": {
+        "crashed": 37,
+        "landed": 3
+      }
+    },
+    "be4+aerospike": {
+      "engine": "be4",
+      "tech": "aerospike",
+      "success_rate": 0.075,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 32.6,
+      "mean_flight_time_s": 26.4,
+      "outcomes": {
+        "crashed": 37,
+        "landed": 3
+      }
+    },
+    "be4+rdre": {
+      "engine": "be4",
+      "tech": "rdre",
+      "success_rate": 0.175,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 36.6,
+      "mean_flight_time_s": 30.5,
+      "outcomes": {
+        "crashed": 33,
+        "landed": 7
+      }
+    },
+    "be4+rdre_spike": {
+      "engine": "be4",
+      "tech": "rdre_spike",
+      "success_rate": 0.175,
+      "waypoint_rate": 1.0,
+      "mean_fuel_used_pct": 36.6,
+      "mean_flight_time_s": 30.5,
+      "outcomes": {
+        "crashed": 33,
+        "landed": 7
+      }
+    },
+    "rutherford+standard": {
+      "engine": "rutherford",
+      "tech": "standard",
+      "success_rate": 0.125,
+      "waypoint_rate": 0.625,
+      "mean_fuel_used_pct": 49.1,
+      "mean_flight_time_s": 45.7,
+      "outcomes": {
+        "crashed": 25,
+        "timeout": 10,
+        "landed": 5
+      }
+    },
+    "rutherford+aerospike": {
+      "engine": "rutherford",
+      "tech": "aerospike",
+      "success_rate": 0.125,
+      "waypoint_rate": 0.625,
+      "mean_fuel_used_pct": 45.4,
+      "mean_flight_time_s": 45.5,
+      "outcomes": {
+        "crashed": 25,
+        "timeout": 10,
+        "landed": 5
+      }
+    },
+    "rutherford+rdre": {
+      "engine": "rutherford",
+      "tech": "rdre",
+      "success_rate": 0.15,
+      "waypoint_rate": 0.625,
+      "mean_fuel_used_pct": 52.0,
+      "mean_flight_time_s": 48.4,
+      "outcomes": {
+        "crashed": 23,
+        "timeout": 11,
+        "landed": 6
+      }
+    },
+    "rutherford+rdre_spike": {
+      "engine": "rutherford",
+      "tech": "rdre_spike",
+      "success_rate": 0.15,
+      "waypoint_rate": 0.625,
+      "mean_fuel_used_pct": 47.8,
+      "mean_flight_time_s": 47.8,
+      "outcomes": {
+        "crashed": 24,
+        "timeout": 10,
+        "landed": 6
+      }
+    }
+  },
+  "eval_seconds": 74.0
+}
