@@ -84,58 +84,82 @@ Prints success rate (landed on pad), crash rate, mean reward, mean fuel
 used, mean episode length; saves a GIF of a landing attempt and appends a
 JSON-lines summary to `runs/eval_summary.jsonl`.
 
-## Sample results
+## Train until perfect
 
-Results from the actual verified run in this repo (200k-timestep PPO,
-50 eval episodes, seed 0) — recorded in `runs/eval_summary.jsonl`:
+```bash
+python train_until_perfect.py   # rounds of 400k steps + 1000-episode evals
+```
 
-| Metric | Value |
-|---|---|
-| Success (landed on pad) | **34/50 = 68.0%** |
-| Crashes | 16/50 = 32.0% |
-| Mean reward | 37.9 |
-| Mean fuel used | 3.7 / 100 |
-| Mean episode length | 37 steps |
+Trains PPO in rounds until the agent scores **0 failures in 1000
+deterministic eval episodes** (fixed seeds, far from training seeds),
+or until the 3M-new-step cap. Each round saves a checkpoint
+(`models/perfect_round_N.zip`); the best checkpoint (fewest failures)
+is kept as `models/ppo_rocket_best.zip`. Rounds 1–3 use lr 3e-4 /
+entropy 0.01; later rounds fine-tune at lr 1e-4 / entropy 0.002.
+Per-round summaries go to `runs/perfect_run_log.jsonl`, per-episode
+diagnostics (starting conditions, impact velocity/tilt, touchdown x,
+crash cause) to `runs/perfect_round_N_episodes.csv`.
 
-Training curve (`models/ppo_rocket_curve.csv`) shows the learning clearly:
-early episodes average ≈ −120 reward (all crashes); by the end of 200k
-steps episodes average ≈ +87 reward (mostly clean landings). A landing
-attempt GIF from the eval run is saved at `runs/eval_landing.gif`.
+## Analytics & report
 
-## Final result — 99.7% (Oct 17, 2026)
+```bash
+python charts.py    # 6 figures -> runs/charts/
+python report.py    # showcase page -> runs/report.html
+```
 
-Continued training from the 200k-step model with `train_until_perfect.py`
-(1,000-episode evals per round) reached **99.7% clean landings** and
-stopped there as the accepted final result:
+Open **[runs/report.html](runs/report.html)** for the full story:
+success vs training steps, crash-cause breakdown per round,
+touchdown-position distribution, hardest starting conditions, eval
+metrics, and crash anatomy — all from real logged data.
 
-| Round | Cumulative steps | Landed / 1000 | Mean reward | Mean fuel |
+## Results — the zero-crash run
+
+**Goal: 0 failures in 1000 eval episodes. Result: not reached —
+best was 3 failures / 1000 (99.7% success).** Full run, 3.2M total
+training steps (200k prior + 3M new), 1000-episode deterministic
+evals per round:
+
+| Round | Cum. steps | Landed / 1000 | Failures | Dominant crash cause |
 |---|---|---|---|---|
-| 0 | 200,704 | 435 (43.5%) | -18.7 | 3.6 |
-| 1 | 600,704 | 897 (89.7%) | 68.6 | 4.7 |
-| 3 | 1,400,704 | 984 (98.4%) | 83.3 | 4.3 |
-| 4 | 1,800,704 | 991 (99.1%) | 84.5 | 4.3 |
-| 6 | 2,600,704 | **997 (99.7%)** | **85.6** | **4.0** |
+| 0 (baseline) | 200,704 | 435 | 565 | too-fast impact (563) |
+| 1 | 600,704 | 897 | 103 | off-pad (75), too-fast (27) |
+| 2 | 1,000,704 | 881 | 119 | off-pad (119) |
+| 3 | 1,400,704 | 984 | 16 | off-pad (11), too-fast (5) |
+| 4 | 1,800,704 | 991 | 9 | off-pad (9) |
+| 5 | 2,200,704 | 990 | 10 | off-pad (7), too-fast (3) |
+| **6 (best)** | **2,600,704** | **997** | **3** | **too-fast (2), off-pad (1)** |
+| 7 | 3,000,704 | 978 | 22 | off-pad (22) |
+| 8 | 3,200,704 | 885 | 115 | off-pad (115) |
 
-Best model: `models/ppo_rocket_best.zip` (Round 6). Full per-round logs in
-`runs/perfect_run_log.jsonl`.
+Best model: `models/ppo_rocket_best.zip` (Round 6). Mean reward 85.6,
+mean fuel 4.0/100, mean episode length 37 steps. Later rounds
+regressed — PPO is noisy at this precision, and the last few failures
+are stubborn edge cases (far, fast starts landing just outside the
+pad). Round 8 was re-run from the Round 7 checkpoint after the
+original process died mid-round. The run log and per-episode CSVs
+are in `runs/` for anyone who wants to dig in.
 
-Note: this final training run used the fixed landing check in `env.py`
-— the landing limits (|vy| ≤ 1.5 m/s, |vx| ≤ 1.0 m/s, |tilt| ≤ 0.20 rad)
-are now judged on pre-contact impact velocity/tilt, not the post-contact
-zeroed state (the original code silently disabled the speed limits).
-
-PPO typically goes from near-0% success (random flailing / crashing) to a
-clear majority of clean landings within ~100–200k steps on this task, with
-mean fuel use dropping as the policy learns to burn only on final descent.
+> **Correction to the earlier numbers:** the first version of this
+> repo reported 68% success (34/50) — but the env had a bug: velocity
+> was zeroed *before* the landing check, so the |vy| ≤ 1.5 and
+> |vx| ≤ 1.0 speed limits never applied and the agent learned to slam
+> into the pad. Fixing it (judge the pre-contact impact velocity)
+> dropped the same model to 43.5% on 1000 episodes. All numbers
+> above use the fixed criteria. Physics constants and landing
+> thresholds are unchanged — only the bug is fixed.
 
 ## Project layout
 
 ```
-env.py        Gymnasium environment (physics, reward, termination)
-render.py     Matplotlib renderer: rocket, flame, pad, trace, telemetry (headless)
-train.py      PPO training + per-episode curve logging
-evaluate.py   Evaluation + landing GIF
-requirements.txt  pinned open-source deps
+env.py                  Gymnasium environment (physics, reward, termination, diagnostics)
+render.py               Matplotlib renderer: rocket, flame, pad, trace, telemetry (headless)
+train.py                PPO training + per-episode curve logging
+train_until_perfect.py  Round-based training until 0 failures / 1000 evals
+diagnostics.py          Deterministic eval with per-episode diagnostics + crash taxonomy
+charts.py               6 analytics figures -> runs/charts/
+report.py               Showcase page -> runs/report.html
+evaluate.py             Evaluation + landing GIF (+ --diag-csv)
+requirements.txt        pinned open-source deps
 ```
 
 ## Ideas for extension

@@ -1,0 +1,12 @@
+{
+  "reached_zero": false,
+  "best_round": 6,
+  "best_failures": 3,
+  "best_failures_per_1000": 3,
+  "total_new_steps": 3000000,
+  "total_steps_incl_prior": 3200704,
+  "best_model": "models/ppo_rocket_best.zip",
+  "eval_episodes": 1000,
+  "eval_seed_base": 1000000,
+  "note": "Round 8 was re-run from the Round 7 checkpoint after the original process died mid-round; Round 8 result is from the resumed run."
+}

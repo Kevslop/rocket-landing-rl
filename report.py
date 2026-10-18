@@ -48,15 +48,20 @@ def build_report(rounds=None, out="runs/report.html",
                  gif_path="runs/eval_landing_best.gif"):
     if rounds is None:
         rounds = load_rounds()
-    final = rounds[-1]
-    first = rounds[0]
-    final_round_no = final["round"]
-    episodes = pd.read_csv(
-        f"runs/perfect_round_{final_round_no}_episodes.csv")
-    charts, _, anatomy_round = build_all_charts(rounds)
-
     with open("runs/perfect_final.json") as f:
         final_meta = json.load(f)
+    # Headline stats + per-episode figures showcase the BEST round, not
+    # the last one — later rounds can regress (Round 8 did: 885/1000
+    # after Round 6's 997/1000). The round-by-round figures still show
+    # every round, regression included.
+    best_round_no = final_meta["best_round"]
+    by_round = {r["round"]: r for r in rounds}
+    final = by_round[best_round_no]
+    first = rounds[0]
+    episodes = pd.read_csv(
+        f"runs/perfect_round_{best_round_no}_episodes.csv")
+    charts, _, anatomy_round = build_all_charts(
+        rounds, showcase_round=best_round_no)
 
     takeaways = []
     takeaways.append(
@@ -114,9 +119,13 @@ def build_report(rounds=None, out="runs/report.html",
          "fuel trace how the policy's strategy changes (more braking "
          "costs more fuel)."),
         ("crash_anatomy", f"Crash anatomy (round {anatomy_round})",
-         "Distributions of impact vertical speed and tilt for failed "
-         "episodes, with the landing limits marked. Failures just past "
-         "a limit are near-misses; far past it, the approach broke down."),
+         f"Distributions of impact vertical speed and tilt for failed "
+         f"episodes in round {anatomy_round}, with the landing limits "
+         f"marked. The best round ({best_round_no}) had only "
+         f"{final['failures']} failures — too few for a distribution — so "
+         f"anatomy uses the last round with substantial failures. "
+         f"Failures just past a limit are near-misses; far past it, the "
+         f"approach broke down."),
     ]
 
     figures_html = "\n".join(

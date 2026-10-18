@@ -202,28 +202,40 @@ def fig_crash_anatomy(episodes: pd.DataFrame, round_no: int, path):
     plt.close(fig)
 
 
-def build_all_charts(rounds=None, outdir="runs/charts"):
-    """Build every figure. Returns {name: path}."""
+def build_all_charts(rounds=None, outdir="runs/charts", showcase_round=None):
+    """Build every figure. Returns {name: path}.
+
+    `showcase_round` is the round whose per-episode data feeds the
+    landing-position and success-by-start figures — normally the BEST
+    round (from perfect_final.json), not necessarily the last round,
+    since a later round can regress. Crash anatomy uses the last round
+    with failures (a 3-failure round has no distribution to show).
+    """
     os.makedirs(outdir, exist_ok=True)
     if rounds is None:
         rounds = load_rounds()
     final_round = max(r["round"] for r in rounds)
-    final_eps = load_episodes(final_round)
-    # Crash anatomy: last round that actually had failures.
+    if showcase_round is None:
+        try:
+            with open("runs/perfect_final.json") as f:
+                showcase_round = json.load(f)["best_round"]
+        except (FileNotFoundError, KeyError):
+            showcase_round = final_round
+    showcase_eps = load_episodes(showcase_round)
     anatomy_round = final_round
     for r in sorted(rounds, key=lambda x: x["round"], reverse=True):
         if r["failures"] > 0:
             anatomy_round = r["round"]
             break
-    anatomy_eps = (final_eps if anatomy_round == final_round
+    anatomy_eps = (showcase_eps if anatomy_round == showcase_round
                    else load_episodes(anatomy_round))
 
     paths = {}
     jobs = [
         ("crash_ratio", lambda p: fig_crash_ratio(rounds, p)),
         ("crash_causes", lambda p: fig_crash_causes(rounds, p)),
-        ("landing_positions", lambda p: fig_landing_positions(final_eps, p)),
-        ("success_by_start", lambda p: fig_success_by_start(final_eps, p)),
+        ("landing_positions", lambda p: fig_landing_positions(showcase_eps, p)),
+        ("success_by_start", lambda p: fig_success_by_start(showcase_eps, p)),
         ("eval_metrics", lambda p: fig_eval_metrics(rounds, p)),
         ("crash_anatomy",
          lambda p: fig_crash_anatomy(anatomy_eps, anatomy_round, p)),
@@ -232,7 +244,7 @@ def build_all_charts(rounds=None, outdir="runs/charts"):
         path = os.path.join(outdir, name + ".png")
         fn(path)
         paths[name] = path
-    return paths, final_round, anatomy_round
+    return paths, showcase_round, anatomy_round
 
 
 if __name__ == "__main__":
